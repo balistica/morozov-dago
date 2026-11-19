@@ -143,13 +143,23 @@ func build(dataPath, tplPath, staticDir, outDir string) error {
 	}
 
 	funcs := template.FuncMap{
-		"add": func(a, b int) int {
-			return a + b
-		},
-		"sub": func(a, b int) int {
-			return a - b
-		},
-	}
+    "add": func(a, b int) int {
+        return a + b
+    },
+    "sub": func(a, b int) int {
+        return a - b
+    },
+    "seq": func(start, end int) []int {
+        if end < start {
+            return []int{}
+        }
+        result := make([]int, 0, end-start+1)
+        for i := start; i <= end; i++ {
+            result = append(result, i)
+        }
+        return result
+    },
+}
 
 	tpl, err := template.New(filepath.Base(tplPath)).
 		Funcs(funcs).
