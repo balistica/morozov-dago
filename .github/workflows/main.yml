@@ -1,4 +1,4 @@
-name: main
+name: Build and deploy
 
 on:
   push:
@@ -15,30 +15,51 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.22"
+          go-version: '1.22'
           cache: false
+
+      - name: Show project files
+        run: |
+          echo "Root:"
+          ls -la
+          echo "Templates:"
+          ls -la templates || true
+          echo "Static:"
+          ls -la static || true
+
       - name: Vet
         run: go vet ./...
 
       - name: Test
-        run: go test ./...
+        run: go test ./... -v
 
-      - name: Build site
-        run: go run . -out dist
+      - name: Build
+        run: go run . -data data.json -out dist
+
+      - name: Verify output
+        run: |
+          test -f dist/index.html
+          test -f dist/style.css
+          test -f dist/app.js
+          echo "Build output OK"
 
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
 
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - id: deployment
         uses: actions/deploy-pages@v4
